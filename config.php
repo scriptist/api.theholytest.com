@@ -3,7 +3,7 @@
 global $config;
 
 $config = [
-	'books' => [
+	'sources' => [
 		'bible' => 'bible-kingjames',
 		'quran' => 'quran-arberry',
 	],

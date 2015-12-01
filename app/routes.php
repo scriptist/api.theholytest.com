@@ -1,6 +1,8 @@
 <?php
 
 $app->get('/random(/:count)', function($count = 1) use($app) {
+	global $config, $bible_books;
+
 	if (!preg_match('/^[0-9]+$/', $count))
 		return $app->pass();
 
@@ -11,7 +13,16 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 		]);
 	}
 
-	global $config, $bible_books;
+	$sourceCounts = [];
+	for ($i=0; $i < $count; $i++) {
+		$source = array_rand($config['sources']);
+		if (array_key_exists($source, $sourceCounts)) {
+			$sourceCounts[$source]++;
+		} else {
+			$sourceCounts[$source] = 1;
+		}
+	}
+
 
 	try {
 
@@ -24,9 +35,8 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 		$db->set_charset($config['dbCredentials']['charset']);
 		$lines = [];
 
-		for ($i=0; $i < $count; $i++) {
-			$source = array_rand($config['books']);
-			$sourceDb = $config['books'][$source];
+		foreach ($sourceCounts as $source => $sourceCount) {
+			$sourceDb = $config['sources'][$source];
 
 			$result = $db->query(
 				'SELECT *' .
@@ -37,25 +47,26 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 				// Require uppercase first letter and full stop at end
 				// 'AND SUBSTRING(text, 1, 1) COLLATE utf8_bin = UPPER(SUBSTRING(text, 1, 1)) ' .
 				// 'AND SUBSTRING(text, -1) = "." ' .
-				'ORDER BY RAND() LIMIT 1'
+				'ORDER BY RAND() LIMIT ' . $sourceCount
 			);
 
 			if (!$result->num_rows)
 				throw new Exception("Could not get lines", 1);
 
+			while ($line = $result->fetch_assoc()) {
+				// Normalise data
+				$line['source'] = $source;
+				if ($source === 'bible') {
+					$line['book'] = $bible_books[$line['book']];
+				} else if ($source === 'quran') {
+					$line['text'] = str_replace('´', '\'', $line['text']);
+				}
 
-			$line = $result->fetch_assoc();
-
-			// Normalise data
-			$line['source'] = $source;
-			if ($source === 'bible') {
-				$line['book'] = $bible_books[$line['book']];
-			} else if ($source === 'quran') {
-				$line['text'] = str_replace('´', '\'', $line['text']);
+				array_push($lines, $line);
 			}
-
-			array_push($lines, $line);
 		}
+
+		shuffle($lines);
 	} catch (Exception $e) {
 		return $app->render(500, [
 			'error' => $e->getMessage(),
