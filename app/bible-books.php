@@ -1,5 +1,6 @@
 <?php
 
+global $bible_books;
 $bible_books = [
 	'Genesis',
 	'Exodus',

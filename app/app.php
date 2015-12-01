@@ -1,5 +1,7 @@
 <?php
 
+require 'bible-books.php';
+
 $app = new \Slim\Slim();
 $app->view(new \JsonApiView());
 $app->add(new \JsonApiMiddleware());

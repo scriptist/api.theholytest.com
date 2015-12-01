@@ -1,7 +1,7 @@
 <?php
 
 $app->get('/random', function() use($app) {
-	global $config;
+	global $config, $bible_books;
 	$book = array_rand($config['books']);
 	$bookDb = $config['books'][$book];
 
@@ -25,8 +25,14 @@ $app->get('/random', function() use($app) {
 			'ORDER BY RAND() LIMIT 1'
 		);
 
-		$row = $result->fetch_assoc();
-		$row['text'] = str_replace('´', '\'', $row['text']);
+		$line = $result->fetch_assoc();
+
+		// Normalise data
+		if ($book === 'bible') {
+			$line['book'] = $bible_books[$line['book']];
+		} else if ($book === 'quran') {
+			$line['text'] = str_replace('´', '\'', $line['text']);
+		}
 	} catch (Exception $e) {
 		return $app->render(500, [
 			'msg' => 'Error',
@@ -35,7 +41,7 @@ $app->get('/random', function() use($app) {
 	}
 
 	$app->render(200, [
-		'text' => $row['text'],
+		'line' => $line,
 		'book' => $book,
 	]);
 });
