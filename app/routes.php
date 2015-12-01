@@ -12,8 +12,6 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 	}
 
 	global $config, $bible_books;
-	$book = array_rand($config['books']);
-	$bookDb = $config['books'][$book];
 
 	try {
 
@@ -24,42 +22,48 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 			$config['dbCredentials']['database_name']
 		);
 		$db->set_charset($config['dbCredentials']['charset']);
-		$result = $db->query(
-			'SELECT *' .
-			' FROM `' . $bookDb . '` ' .
-			'WHERE `blacklisted` = 0 ' .
-			//  Require minimum length of 60 characters
-			'AND LENGTH(text) >= 60 ' .
-			// Require uppercase first letter and full stop at end
-			// 'AND SUBSTRING(text, 1, 1) COLLATE utf8_bin = UPPER(SUBSTRING(text, 1, 1)) ' .
-			// 'AND SUBSTRING(text, -1) = "." ' .
-			'ORDER BY RAND() LIMIT ' . $count
-		);
-
-		if (!$result->num_rows)
-			throw new Exception("Could not get lines", 1);
-
 		$lines = [];
 
-		while ($line = $result->fetch_assoc()) {
-			array_push($lines, $line);
+		for ($i=0; $i < $count; $i++) {
+			$source = array_rand($config['books']);
+			$sourceDb = $config['books'][$source];
+
+			$result = $db->query(
+				'SELECT *' .
+				' FROM `' . $sourceDb . '` ' .
+				'WHERE `blacklisted` = 0 ' .
+				//  Require minimum length of 60 characters
+				'AND LENGTH(text) >= 60 ' .
+				// Require uppercase first letter and full stop at end
+				// 'AND SUBSTRING(text, 1, 1) COLLATE utf8_bin = UPPER(SUBSTRING(text, 1, 1)) ' .
+				// 'AND SUBSTRING(text, -1) = "." ' .
+				'ORDER BY RAND() LIMIT 1'
+			);
+
+			if (!$result->num_rows)
+				throw new Exception("Could not get lines", 1);
+
+
+			$line = $result->fetch_assoc();
 
 			// Normalise data
-			if ($book === 'bible') {
+			$line['source'] = $source;
+			if ($source === 'bible') {
 				$line['book'] = $bible_books[$line['book']];
-			} else if ($book === 'quran') {
+			} else if ($source === 'quran') {
 				$line['text'] = str_replace('´', '\'', $line['text']);
 			}
+
+			array_push($lines, $line);
 		}
 	} catch (Exception $e) {
 		return $app->render(500, [
-			'error' => $e->getMessage()
+			'error' => $e->getMessage(),
 		]);
 	}
 
 	$app->render(200, [
 		'lines' => $lines,
-		'book' => $book,
 	]);
 });
 
