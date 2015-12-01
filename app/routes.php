@@ -1,10 +1,10 @@
 <?php
 
 $app->get('/random(/:count)', function($count = 1) use($app) {
-	if (!preg_match('/^[0-9]+$/', $count) || intval($count) < 1 || intval($count) > 10)
+	if (!preg_match('/^[0-9]+$/', $count))
 		return $app->pass();
 
-	$count = intval($count);
+	$count = intval($count, 10);
 	if ($count < 1 || $count > 10) {
 		return $app->render(500, [
 			'error' => 'Count must be between 1 and 10'
@@ -61,6 +61,29 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 		'lines' => $lines,
 		'book' => $book,
 	]);
+});
+
+$app->post('/vote/:book/:id/:vote', function($book, $id, $vote) use($app) {
+	global $config;
+	if (!preg_match('/^[0-9]+$/', $id) || !array_key_exists($book, $config['books']) || !array_key_exists($vote, $config['books']))
+		return $app->pass();
+	$id = intval($id, 10);
+
+	$bookDb = $config['books'][$book];
+	$db = new mysqli(
+		$config['dbCredentials']['server'],
+		$config['dbCredentials']['username'],
+		$config['dbCredentials']['password'],
+		$config['dbCredentials']['database_name']
+	);
+	$db->set_charset($config['dbCredentials']['charset']);
+	$result = $db->query(
+		'UPDATE `' . $bookDb . '` ' .
+		'SET `votes_' . $vote . '` = `votes_' . $vote . '` + 1 ' .
+		'WHERE `id` = ' . $id
+	);
+
+	$app->render(200);
 });
 
 ?>
