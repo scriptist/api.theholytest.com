@@ -42,9 +42,11 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 				'SELECT *' .
 				' FROM `' . $sourceDb . '` ' .
 				'WHERE `blacklisted` = 0 ' .
-				//  Require minimum length of 60 characters
+				//  Require minimum length of 50 characters
 				// (this reduces the number of quran verses to just 30, while there are 30,000 bible verses to choose from)
 				'AND LENGTH(text) >= 50 ' .
+				//  Require maximum length of 200 characters
+				'AND LENGTH(text) <= 200 ' .
 				// Require uppercase first letter and full stop at end
 				// Disabled as this was wayyyy too limiting
 				// 'AND SUBSTRING(text, 1, 1) COLLATE utf8_bin = UPPER(SUBSTRING(text, 1, 1)) ' .
