@@ -57,7 +57,7 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 				// Normalise data
 				$line['source'] = $source;
 				if ($source === 'bible') {
-					$line['book'] = $bible_books[$line['book']];
+					$line['book'] = $bible_books[$line['book'] - 1];
 				} else if ($source === 'quran') {
 					$line['text'] = str_replace('´', '\'', $line['text']);
 				}
