@@ -82,13 +82,13 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 	]);
 });
 
-$app->post('/vote/:book/:id/:vote', function($book, $id, $vote) use($app) {
+$app->post('/guess/:source/:id/:vote', function($source, $id, $vote) use($app) {
 	global $config;
-	if (!preg_match('/^[0-9]+$/', $id) || !array_key_exists($book, $config['books']) || !array_key_exists($vote, $config['books']))
+	if (!preg_match('/^[0-9]+$/', $id) || !array_key_exists($source, $config['sources']) || !array_key_exists($vote, $config['sources']))
 		return $app->pass();
 	$id = intval($id, 10);
 
-	$bookDb = $config['books'][$book];
+	$bookDb = $config['sources'][$source];
 	$db = new mysqli(
 		$config['dbCredentials']['server'],
 		$config['dbCredentials']['username'],
