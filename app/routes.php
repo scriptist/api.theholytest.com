@@ -23,6 +23,11 @@ $app->get('/random(/:count)', function($count = 1) use($app) {
 		}
 	}
 
+	if ($count === 10) {
+		$sourceCounts['bible'] = min(7, max(3, $sourceCounts['bible']));
+		$sourceCounts['quran'] = min(7, max(3, $sourceCounts['quran']));
+	}
+
 
 	try {
 
